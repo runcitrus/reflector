@@ -1,0 +1,28 @@
+{{ define "func-unary" -}}
+func (s *{{ .ObjectName }}) {{ .MethodName }}(
+	addr string,
+{{- if .HasRequest }}
+	in any,
+{{- end }}
+) (any, error) {
+	_lock.RLock()
+	defer _lock.RUnlock()
+
+	var req pb.{{ .RequestType }}
+
+	cc, ok := _connections[addr]
+	if !ok {
+		return nil, fmt.Errorf("gRPC connection with address %s not found", addr)
+	}
+
+{{- if .HasRequest }}
+
+	x, _ := json.Marshal(in)
+	_ = json.Unmarshal(x, &req)
+{{- end }}
+
+	client := pb.New{{ .ObjectName }}(cc)
+	return client.{{ .MethodName }}(_ctx, &req)
+}
+
+{{ end }}

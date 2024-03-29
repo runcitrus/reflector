@@ -1,0 +1,74 @@
+{{ define "head" -}}
+package reflector
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
+
+	pb "{{ .Package }}"
+)
+
+var (
+	_connections = make(map[string]*grpc.ClientConn)
+	_lock        sync.RWMutex
+	_ctx         context.Context
+	_emit        func(ctx context.Context, name string, data ...any)
+	_dial        func(ctx context.Context, target string) (conn *grpc.ClientConn, err error)
+)
+
+func Init(
+	ctx context.Context,
+	emit func(ctx context.Context, name string, data ...any),
+	dial func(ctx context.Context, target string) (conn *grpc.ClientConn, err error),
+) {
+	_ctx = ctx
+	_emit = emit
+	_dial = dial
+}
+
+type GRPC struct{}
+
+func (GRPC) Connect(addr string) error {
+	_lock.Lock()
+	defer _lock.Unlock()
+
+	if _ctx == nil {
+		return fmt.Errorf("gRPC context is not set")
+	}
+
+	if conn, ok := _connections[addr]; ok {
+		conn.Close()
+		delete(_connections, addr)
+	}
+
+	cc, err := _dial(_ctx, addr)
+	if err != nil {
+		return err
+	}
+
+	_connections[addr] = cc
+
+	return nil
+}
+
+func (GRPC) Disconnect(addr string) error {
+	_lock.Lock()
+	defer _lock.Unlock()
+
+	if conn, ok := _connections[addr]; ok {
+		conn.Close()
+		delete(_connections, addr)
+	}
+
+	return nil
+}
+
+{{ end }}
