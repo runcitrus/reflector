@@ -22,6 +22,23 @@ var (
 	_dial        func(ctx context.Context, target string) (conn *grpc.ClientConn, err error)
 )
 
+// getClientConn returns a connection to the given address.
+// should be called with _lock held.
+func getClientConn() (*grpc.ClientConn, error) {
+	cc, ok := _connections[addr]
+	if !ok {
+		return nil, fmt.Errorf("gRPC connection with address %s not found", addr)
+	}
+
+	return cc, nil
+}
+
+// jsonRemarshal is a hack to hide gRPC types from Wails
+func jsonRemarshal(in, out any) {
+	x, _ := json.Marshal(in)
+	_ = json.Unmarshal(x, out)
+}
+
 func Init(
 	ctx context.Context,
 	emit func(ctx context.Context, name string, data ...any),

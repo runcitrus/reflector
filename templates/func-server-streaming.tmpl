@@ -25,15 +25,14 @@ func (s *{{ .ObjectName }}) {{ .MethodName }}(
 
 	var req pb.{{ .RequestType }}
 
-	cc, ok := _connections[addr]
-	if !ok {
-		return fmt.Errorf("gRPC connection with address %s not found", addr)
+	cc, err := getClientConn(addr)
+	if err != nil {
+		return nil, err
 	}
 
 {{- if .HasRequest }}
 
-	x, _ := json.Marshal(in)
-	_ = json.Unmarshal(x, &req)
+	jsonRemarshal(in, &req)
 {{- end }}
 
 	client := pb.New{{ .ObjectName }}(cc)
