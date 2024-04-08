@@ -24,7 +24,7 @@ var (
 
 // getClientConn returns a connection to the given address.
 // should be called with _lock held.
-func getClientConn() (*grpc.ClientConn, error) {
+func getClientConn(addr string) (*grpc.ClientConn, error) {
 	cc, ok := _connections[addr]
 	if !ok {
 		return nil, fmt.Errorf("gRPC connection with address %s not found", addr)

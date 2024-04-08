@@ -27,7 +27,7 @@ func (s *{{ .ObjectName }}) {{ .MethodName }}(
 
 	cc, err := getClientConn(addr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 {{- if .HasRequest }}
