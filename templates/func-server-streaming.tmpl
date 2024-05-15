@@ -3,10 +3,7 @@ func ({{ .ObjectName }}) loop_{{ .MethodName }}(addr string, stream pb.{{ .Respo
 	for {
 		event, err := stream.Recv()
 		if err != nil {
-			if status, ok := status.FromError(err); ok && status.Code() == codes.Canceled {
-				return
-			}
-			// TODO: send error event
+			_emit(_ctx, "{{ .ObjectName }}_{{ .MethodName }}_close", addr, err.Error())
 			return
 		}
 
